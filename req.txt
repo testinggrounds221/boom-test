@@ -1,0 +1,110 @@
+Can u add the following feature to the boomerang chess:
+
+Normal game syntax:
+
+e4 e5
+Qh5 Be7
+Qxf7 Kf8
+
+Boomerang game syntax:
+
+e4 e5
+Qh5 Be7
+Qxf7< Kf8
+
+Here the symbol "<" indicates a boomerang move.
+This syntax is easy to use by a human also for recording a boomerang chess game.
+
+The game shud have the following features:
+
+1) Ability to save the game G1 sequence in the above syntax (using the "<" symbol for boomerang moves)
+
+2) Ability to open the saved game sequence G1 and view the game move by move.
+
+3) Ability to save a particular game "position" Pos1.
+
+4) Ability to open a saved position pos1 and continue playing a game.
+
+We need to find a similar manual notation for recording Xray chess and Pool Chess moves , which is useable both by humans and computers.
+
+Let me know ur thoughts.
+
+c.move(c.moves()[Math.floor(Math.random() * c.moves().length)]);
+c.move(c.moves()[Math.floor(Math.random() * c.moves().length)])["san"]
+
+to do :
+for all illegal moves
+for boom move
+
+null move : rnbqk1n1/2ppbppr/p3p2p/1p2K3/4P3/8/PPPP1PPP/RNBQ1BNR w q - 2 9
+
+notation:
+'1. g4 a5 2. d4 Nc6 3. e4 f6 4. f4 a4 5. c4 Rb8 6. b4 h6 7. h4 b5 8. Bd3 Nxb4 9. Nc3 Rb6 10. Qe2 Rd6'
+
+for(let e of t.rows){
+    console.log(e.children[0].innerText)
+}
+`````
+
+
+let wt = $("#whiteMoves")
+let bt = $("#blackMoves")
+
+let wr = wt.rows
+let br = bt.rows
+
+let wc = wr.length
+let bc = br.length
+
+let pgnString = ""
+for(let wp=0, bp=0;wp<wc,bp<bc;wp++,bp++){
+    let w = wr[wp].children[0].innerText
+    let b = br[bp].children[0].innerText
+    pgnString += (wp+1+". "+w+" "+b + " ")
+}
+console.log(pgnString.trim())
+`````
+
+let loadPGNGame = new Chess()
+let sp = pgn.split(" ")
+for (let i = 0; i < sp.length; i++) {
+    if(i%3==0) continue
+    else loadPGNGame.move(sp[i])
+}
+
+Normal Game:
+1. e4 g6 2. f3 Nh6 3. g3 g5 4. b4 g4 5. c3 b5 6. d3 Nf5 7. a3 Nc6 8. h3 Ne3 9. Rh2 f6
+r1bqkb1r/p1ppp2p/2n2p2/1p6/1P2P1p1/P1PPnPPP/7R/RNBQKBN1 w Qkq - 0 10
+
+Boom Game:
+1. e4 f6 2. Nf3 g6 3. g3 b5 4. Nh4 g5 5. Ng6 Nc6 6. Nh8< Nh6 7. Nf8< Nb8 8. Ne7< g4
+rnbqk3/p1pp3p/5pNn/1p6/4P1p1/6P1/PPPP1P1P/RNBQKB1R w KQq - 0 9
+
+rnbqk3/p1pp3p/5pNn/1p6/4P1p1/6P1/PPPP1P1P/RNBQKB1R w KQq - 0 9
+
+c.put({type: 'n', color: 'w'},'e3')
+`````
+
+let c = new Chess("rnbqkbnr/ppp1pppp/8/3p4/8/2N1N3/PPPPPPPP/R1BQKB1R w KQkq - 0 1")
+let m = c.move("Nexd5",{"verbose":true})
+c.put({type: 'n', color: 'w'},m.from)
+c.remove(m.to)
+
+````
+let loadPGNGame = new Chess()
+let sp = pgn.split(" ")
+for (let i = 0; i < sp.length; i++) {
+    if(i%3==0) continue
+    else {
+        if(sp[i].includes("<")){
+            sp[i].replace("<","")
+            let c = new Chess(loadPGNGame.fen())
+            let m = c.move(sp[i],{"verbose":true})
+            c.put({type: m.piece, color: m.color},m.from)
+            c.remove(m.to)
+            loadPGNGame.load(c.fen())
+        }else{
+            loadPGNGame.move(sp[i])    
+       }        
+    }
+}
