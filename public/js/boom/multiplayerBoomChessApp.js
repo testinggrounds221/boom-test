@@ -29,6 +29,7 @@ var squareClass = 'square-55d63'
 
 let isChangeFen = false
 let changeFen = {}
+let currentSAN = null
 
 let waitForBoom = false
 
@@ -71,6 +72,7 @@ $(function () {
 				moveBack($(this).data('move'))
 				$(this).dialog("close");
 				waitForBoom = false
+				currentSAN += "<"
 				handleBoomMove($(this).data('move').from, $(this).data('move').to)
 			},
 			No: function () {
@@ -134,7 +136,7 @@ function onDropEditor(source, target) {
 		to: target,
 		promotion: 'q' // NOTE: always promote to a queen for example simplicity
 	})
-
+	if (move) currentSAN = move["san"]
 	let currentFen = editorGame.fen()
 	let fun = 0;
 	let validMovesOfPieces = editorGame.moves({ verbose: true, legal: false })
@@ -150,6 +152,7 @@ function onDropEditor(source, target) {
 		console.log("Move is null")
 		if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target)
 			&& fun === 1) {
+			currentSAN = getSAN(source, target)
 			moveIllegal(source, target);
 			handleBoomMove(source, target)
 		}
@@ -158,6 +161,7 @@ function onDropEditor(source, target) {
 		else if (editorGame.in_checkmate() || editorGame.in_check()) {
 			console.log('Check Mate')
 			if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target) && fun === 1) {
+				currentSAN = getSAN(source, target)
 				moveIllegal(source, target);
 				handleBoomMove(source, target)
 			} else {
@@ -187,6 +191,7 @@ function onDropEditor(source, target) {
 			})
 			$("#dialog-4").data('move', move).dialog("open");
 		} else {
+			currentSAN = getSAN(source, target)
 			var move = editorGame.move({
 				from: source,
 				to: target,
@@ -222,7 +227,8 @@ function onDropEditor(source, target) {
 					draggable: false,
 					close: () => {
 						move.promotion = promote_to
-						editorGame.move(move)
+						let promoMove = editorGame.move(move)
+						if (promoMove) currentSAN = move["san"]
 						let pt = { type: move.promotion, color: move.color }
 						handlePawnPromo(source, target, pt)
 						alertCheckMate()
@@ -268,28 +274,28 @@ function handleValidMove(source, target) {
 	pause_clock();
 	var room = formEl[1].value;
 	myAudioEl.play();
-	socket.emit('Dropped', { source, target, room })
+	socket.emit('Dropped', { source, target, room, currentSAN })
 }
 
 function handleBoomMove(source, target) {
 	pause_clock();
 	var room = formEl[1].value;
 	myAudioEl.play();
-	socket.emit('boomDropped', { source, target, room })
+	socket.emit('boomDropped', { source, target, room, currentSAN })
 }
 
 function handleCastleMove(source, target) {
 	pause_clock();
 	var room = formEl[1].value;
 	myAudioEl.play();
-	socket.emit('castleDropped', { source, target, room })
+	socket.emit('castleDropped', { source, target, room, currentSAN })
 }
 
 function handlePawnPromo(source, target, pieceType) {
 	pause_clock();
 	var room = formEl[1].value;
 	myAudioEl.play();
-	socket.emit('pawnPromoDropped', { source, target, pieceType, room })
+	socket.emit('pawnPromoDropped', { source, target, pieceType, room, currentSAN })
 }
 
 function handleChangeHistory(changeFen) {
@@ -321,7 +327,7 @@ socket.on('printing', (fen) => {
 })
 
 //Catch Display event
-socket.on('DisplayBoard', (fenString, mvSq, userId) => {
+socket.on('DisplayBoard', (fenString, mvSq, userId, currentSAN) => {
 	// console.log(fenString)
 	//This is to be done initially only
 	if (userId != undefined) {
@@ -353,7 +359,7 @@ socket.on('DisplayBoard', (fenString, mvSq, userId) => {
 		changeSquareColorAfterMove(mvSq.source, mvSq.target)
 
 
-	// console.log(turnt)
+	console.log(currentSAN)
 	// document.getElementById('pgn').textContent = pgn
 })
 
@@ -807,6 +813,11 @@ function previewFen(moveFen, rowNum, turn) {
 	editorBoard.position(moveFen)
 	changeFen = { moveFen, rowNum, turn }
 	isChangeFen = true
+}
+
+function getSAN(source, target) {
+	if (editorGame.get(target)) editorGame.get(source).type.toUpperCase() + "x" + target
+	return editorGame.get(source).type.toUpperCase() + target
 }
 
 function setBoardAndGame({ moveFen, rowNum, turn }) {

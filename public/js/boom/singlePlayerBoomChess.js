@@ -25,7 +25,7 @@ var squareToHighlight = null
 var squareClass = 'square-55d63'
 let currentSource = null
 
-let currentPgn = null
+let currentSAN = null
 
 let isBoomAllowed = true
 let playWithComp = true
@@ -49,7 +49,7 @@ $(function () {
 				moveBack($(this).data('move'))
 				$(this).dialog("close");
 				waitForBoom = false
-				currentPgn += "<"
+				currentSAN += "<"
 				makeRandomMoveEditor()
 			},
 			No: function () {
@@ -133,8 +133,8 @@ function onDropEditor(source, target) {
 		promotion: 'q' // NOTE: always promote to a queen for example simplicity
 	})
 
-	if (move) currentPgn = move["san"]
-	console.log(currentPgn)
+	if (move) currentSAN = move["san"]
+	console.log(currentSAN)
 
 	document.getElementById('trn').style.display = null;
 	document.getElementById('trn').innerHTML = editorGame.turn();
@@ -153,14 +153,14 @@ function onDropEditor(source, target) {
 		console.log("Move is null")
 		if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target)
 			&& fun === 1) {
-			currentPgn = getSAN(source, target)
+			currentSAN = getSAN(source, target)
 			moveIllegal(source, target);
 			makeRandomMoveEditor()
 		}
 		else if (editorGame.in_checkmate() || editorGame.in_check()) {
 			console.log('Check Mate')
 			if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target) && fun === 1) {
-				currentPgn = getSAN(source, target)
+				currentSAN = getSAN(source, target)
 				moveIllegal(source, target);
 				makeRandomMoveEditor()
 			} else {
@@ -186,7 +186,7 @@ function onDropEditor(source, target) {
 			})
 			$("#dialog-4").data('move', move).dialog("open");
 		} else {
-			currentPgn = getSAN(source, target)
+			currentSAN = getSAN(source, target)
 			var move = editorGame.move({
 				from: source,
 				to: target,
@@ -222,7 +222,7 @@ function onDropEditor(source, target) {
 					close: () => {
 						move.promotion = promote_to
 						let promoMove = editorGame.move(move)
-						if (promoMove) currentPgn = move["san"]
+						if (promoMove) currentSAN = move["san"]
 						handleNormalCheckMate()
 						makeRandomMoveEditor()
 					},
@@ -398,8 +398,8 @@ function addMove(moveFen) {
 	let td = document.createElement("td")
 	const rowNum = moveTable.rows.length
 	// td.innerText = `Move ${rowNum + 1}`
-	td.innerText = currentPgn
-	currentPgn = null
+	td.innerText = currentSAN
+	currentSAN = null
 	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currTurn) })
 	td.style = "cursor:pointer"
 	tr.appendChild(td)
@@ -539,7 +539,7 @@ function makeRandomMove() {
 	}
 	var randomIdx = Math.floor(Math.random() * possibleMoves.length)
 	let move = editorGame.move(possibleMoves[randomIdx]);
-	currentPgn = move['san']
+	currentSAN = move['san']
 	// myAudioEl.play();
 	editorTurnt = 1 - editorTurnt;
 	editorBoard.position(editorGame.fen());
