@@ -10,7 +10,8 @@ const totalPlayersEl = document.getElementById('players')
 const ChatEl = document.querySelector('#chat')
 const sendButtonEl = document.querySelector('#send')
 const chatContentEl = document.getElementById('chatContent')
-const saveGame = document.getElementById('saveGame');
+const saveFen = document.getElementById('saveFen');
+const savePGN = document.getElementById('savePGN');
 let currentSource = null
 var game = new Chess()
 var turnt = 0;
@@ -309,11 +310,33 @@ function onSnapEndEditor(params) {
 	editorBoard.position(editorGame.fen())
 }
 
-function saveGameListener(e) {
+function saveFenListener(e) {
 	e.preventDefault();
 	var copyText = editorGame.fen();
 	navigator.clipboard.writeText(copyText);
 	alert("Copied the text: " + copyText + " to clipboard");
+}
+
+function savePGNListener(e) {
+	e.preventDefault();
+	let wt = document.getElementById("whiteMoves")
+	let bt = document.getElementById("blackMoves")
+
+	let wr = wt.rows
+	let br = bt.rows
+
+	let wc = wr.length
+	let bc = br.length
+
+	let pgnString = ""
+	for (let wp = 0, bp = 0; wp < wc, bp < bc; wp++, bp++) {
+		let w = wr[wp].children[0].innerText
+		let b = br[bp].children[0].innerText
+		pgnString += (wp + 1 + ". " + w + " " + b + " ")
+	}
+	pgnString = pgnString.trim()
+	navigator.clipboard.writeText(pgnString);
+	alert("Copied the PGN : " + pgnString + " to clipboard")
 }
 
 //Update Status Event
@@ -354,7 +377,7 @@ socket.on('DisplayBoard', (fenString, mvSq, userId, currentSAN) => {
 	editorBoard.position(fenString)
 	addEventListeners()
 	if (!userId)
-		addMoveToHistory(fenString)
+		addMoveToHistory(fenString, currentSAN)
 	if (mvSq.source && mvSq.source)
 		changeSquareColorAfterMove(mvSq.source, mvSq.target)
 
@@ -506,7 +529,6 @@ joinButtonEl.addEventListener('click', (e) => {
 			lf = prompt("Enter Fen. Click Cancel to Continue")
 			var temp = new Chess()
 			if (lf && !temp.load(lf)) {
-				temp.load(lf)
 				alert("Enter Valid State !");
 				promptFen()
 			}
@@ -519,7 +541,21 @@ joinButtonEl.addEventListener('click', (e) => {
 		let isRoomPresent = false
 		for (let r of globalRooms) if (room === r) isRoomPresent = true
 		if (isRoomPresent && urlParams.get('loadGame') === 'true') {
-			loadFen = promptFen()
+			switch (urlParams.get('loadGameType')) {
+				case "fen":
+					loadFen = promptFen()
+					break;
+				case "san":
+					let result = setSANGame()
+					if (result) loadFen = result
+					break;
+				case "none":
+					console.error("Load Game true but no config (none)")
+					break;
+				default:
+					console.error("Load Game true but no config")
+					break;
+			}
 		}
 		socket.emit('joinRoom', { user, room, loadFen }, (error) => {
 			messageEl.textContent = error
@@ -533,7 +569,9 @@ joinButtonEl.addEventListener('click', (e) => {
 	}
 })
 
-saveGame.addEventListener('click', saveGameListener)
+saveFen.addEventListener('click', saveFenListener)
+savePGN.addEventListener('click', savePGNListener)
+
 
 function time_remaining(endtime) {
 	var t = Date.parse(endtime) - Date.parse(new Date());
@@ -777,10 +815,9 @@ function onClickSquare(sq) {
 }
 
 // Change History Functions
-function addMoveToHistory(moveFen) {
+function addMoveToHistory(moveFen, currentSAN) {
 	let moveTable = null
-	let myArray = moveFen.split(" ");
-	const currTurn = myArray[1]
+	const currTurn = editorGame.turn()
 	if (currTurn === 'b')
 		moveTable = document.getElementById("whiteMoves")
 	else moveTable = document.getElementById("blackMoves")
@@ -788,12 +825,11 @@ function addMoveToHistory(moveFen) {
 	let tr = document.createElement("tr")
 	let td = document.createElement("td")
 	const rowNum = moveTable.rows.length
-	td.innerText = `Move ${rowNum + 1}`
-	console.log(editorBoard.orientation(), currTurn)
-	if (editorBoard.orientation()[0] === currTurn) {
-		td.addEventListener('click', () => { previewFen(moveFen, rowNum, currTurn) })
-		td.style = "cursor:pointer"
-	}
+	// td.innerText = `Move ${rowNum + 1}`
+	td.innerText = currentSAN
+	currentSAN = null
+	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currTurn) })
+	td.style = "cursor:pointer"
 	tr.appendChild(td)
 	tr.id = `m${currTurn}-${rowNum}`
 	moveTable.appendChild(tr)
@@ -861,4 +897,55 @@ function setBoardAndGame({ moveFen, rowNum, turn }) {
 			removeID(`mw-${i}`)
 		}
 	}
+}
+
+function setSANGame() {
+	let pgn = prompt('Enter SAN of Game : ');
+
+	let loadPGNGame = new Chess()
+	let sp = pgn.split(" ")
+	try {
+		for (let i = 0; i < sp.length; i++) {
+			if (i % 3 == 0) continue
+			else {
+				let currentPgn = sp[i]
+				if (sp[i].includes("<")) {
+					sp[i] = sp[i].replace("<", "")
+					let c = new Chess(loadPGNGame.fen())
+					let m = c.move(sp[i], { "verbose": true })
+					c.put({ type: m.piece, color: m.color }, m.from)
+					c.remove(m.to)
+					loadPGNGame.load(c.fen())
+				} else {
+					loadPGNGame.move(sp[i])
+				}
+				addMoveFromSAN(loadPGNGame.fen(), loadPGNGame.turn(), currentPgn)
+			}
+		}
+		// console.log(loadPGNGame.fen())		
+		// alert("Loaded Game! Choose Color");
+		return loadPGNGame.fen()
+	} catch (error) {
+		console.error(error)
+		alert("Enter Valid SAN")
+		return null
+	}
+}
+
+function addMoveFromSAN(moveFen, currCustomTurn, currentCustomPgn) {
+	let moveTable = null
+	if (currCustomTurn === 'b')
+		moveTable = document.getElementById("whiteMoves")
+	else moveTable = document.getElementById("blackMoves")
+
+	let tr = document.createElement("tr")
+	let td = document.createElement("td")
+	const rowNum = moveTable.rows.length
+	// td.innerText = `Move ${rowNum + 1}`
+	td.innerText = currentCustomPgn
+	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currCustomTurn) })
+	td.style = "cursor:pointer"
+	tr.appendChild(td)
+	tr.id = `m${currCustomTurn}-${rowNum}`
+	moveTable.appendChild(tr)
 }

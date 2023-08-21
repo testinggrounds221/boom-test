@@ -124,8 +124,15 @@ singlePlayerEl.addEventListener('click', (e) => {
 multiPlayerEl.addEventListener('click', (e) => {
 	e.preventDefault();
 	// console.log("Heyyy")
-	let loadGame = document.querySelector('#loadGame').checked
-	location.href = `multiplayerBoomChess.html?loadGame=${loadGame}`
+	let loadGameBool = document.querySelector('#loadGame').checked
+	let loadGameType = "none"
+	if (loadGameBool) {
+		if (document.querySelector('#isLoadFEN').checked) loadGameType = "fen"
+		if (document.querySelector('#isLoadSAN').checked) loadGameType = "san"
+		location.href = `multiplayerBoomChess.html?loadGame=${loadGameBool}&loadGameType=${loadGameType}`
+	} else {
+		location.href = `multiplayerBoomChess.html?loadGame=${false}&loadGameType="none"`
+	}
 })
 
 isBoomAllowedEle.addEventListener('change', () => {
