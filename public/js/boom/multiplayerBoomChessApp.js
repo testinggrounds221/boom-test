@@ -375,6 +375,7 @@ socket.on('DisplayBoard', (fenString, mvSq, userId, currentSAN) => {
 	console.log(fenString)
 	console.log(`Is received Fen String Valid ? ${editorGame.load(fenString)}`)
 	editorBoard = ChessBoard('boardEditor', configEditor)
+	console.log(editorGame.turn())
 	editorBoard.position(fenString)
 	addEventListeners()
 	if (!userId)
@@ -571,7 +572,7 @@ joinButtonEl.addEventListener('click', (e) => {
 			})
 		}
 
-		emitJoinRoom("fen", "r1bqkbn1/pp1ppppr/n1p5/7p/3PP1P1/N2Q1N2/PPP1KP1P/R1B2B1R w q - 0 8")
+		emitJoinRoom("fen", "r1bqkbn1/pp1pp1pr/n1p2p2/4P2p/3P2P1/N2Q1N2/PPP1KP1P/R1B2B1R w q - 0 8")
 		// emitJoinRoom("pgn", "1. e4 h5 2. f3 a6 3. h3 g5")
 		// emitJoinRoom("none", "")
 
@@ -856,7 +857,7 @@ function previewFen(moveFen, rowNum, turn) {
 
 	console.log(editorGame.turn(), editorBoard.orientation()[0])
 	console.log(typeof (editorGame.turn()), typeof (editorBoard.orientation()[0]))
-	editorGame.load(moveFen)
+	// editorGame.load(moveFen)
 	editorBoard.position(moveFen)
 	changeFen = { moveFen, rowNum, turn }
 	isChangeFen = true

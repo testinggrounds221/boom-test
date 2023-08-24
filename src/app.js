@@ -50,12 +50,13 @@ io.on('connection', (socket) => {
 	}
 
 	//Creating and joining the room
-	socket.on('joinRoom', ({ user, room, loadFen }, callback) => {
+	socket.on('joinRoom', ({ user, room, loadString }, callback) => {
 		//We have to limit the number of users in a room to be just 2
-		handleJoinFEN(user, room, loadFen)
+		handleJoinFEN(user, room, loadString, callback)
+		console.log(loadString)
 	})
 
-	function handleJoinFEN(user, room, loadFen) {
+	function handleJoinFEN(user, room, loadFen, callback) {
 		if (io.nsps['/'].adapter.rooms[room] && io.nsps['/'].adapter.rooms[room].length === 2) {
 			return callback('Already 2 users are there in the room!')
 		}
