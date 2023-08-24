@@ -424,8 +424,10 @@ function setBoardAndGame({ moveFen, rowNum, turn }) {
 	const maxLenW = whiteTable.rows.length
 	if (turn === 'w') rowNum++
 	for (let i = rowNum; i < maxLenW; i++) {
-		document.getElementById(`mw-${i}`).remove()
-		document.getElementById(`mb-${i}`).remove()
+		if (document.getElementById(`mw-${i}`))
+			document.getElementById(`mw-${i}`).remove()
+		if (document.getElementById(`mb-${i}`))
+			document.getElementById(`mb-${i}`).remove()
 	}
 
 	// const maxLenB = blackTable.rows.length
@@ -505,8 +507,9 @@ function makeRandomMoveEditor() {
 function saveGameListener(e) {
 	e.preventDefault();
 	var copyText = editorGame.fen();
-	navigator.clipboard.writeText(copyText);
-	alert("Copied the FEN : " + copyText + " to clipboard");
+	// navigator.clipboard.writeText(copyText);
+	// alert("Copied the FEN : " + copyText + " to clipboard");
+	downloadFile("fen.txt", copyText)
 }
 
 function savePGNListener(e) {
@@ -527,8 +530,9 @@ function savePGNListener(e) {
 		pgnString += (wp + 1 + ". " + w + " " + b + " ")
 	}
 	pgnString = pgnString.trim()
-	navigator.clipboard.writeText(pgnString);
-	alert("Copied the PGN : " + pgnString + " to clipboard")
+	// navigator.clipboard.writeText(pgnString);
+	// alert("Copied the PGN : " + pgnString + " to clipboard")
+	downloadFile("pgn.txt", pgnString)
 }
 
 function makeRandomMove() {
@@ -592,8 +596,8 @@ function setLoadGame() {
 }
 
 function setSANGame() {
-	let pgn = prompt('Enter SAN of Game : ');
-
+	let pgn = sessionStorage.getItem("pgn");
+	sessionStorage.clear();
 	let loadPGNGame = new Chess()
 	let sp = pgn.split(" ")
 	try {
@@ -616,9 +620,9 @@ function setSANGame() {
 		}
 		console.log(loadPGNGame.fen())
 		loadGameFen = loadPGNGame.fen()
-		alert("Loaded Game! Choose Color");
+		// alert("Loaded Game! Choose Color");
 	} catch (error) {
-		alert("Enter Valid SAN")
+		alert("Enter Valid PGN")
 	}
 
 
@@ -643,11 +647,12 @@ function addMoveFromSAN(moveFen, currCustomTurn, currentCustomPgn) {
 }
 
 function setFENGame() {
-	let cusFen = prompt('Enter FEN of Game : ');
+	let cusFen = sessionStorage.getItem("fen");
+	sessionStorage.clear();
 	var temp = new Chess()
 	if (cusFen && !temp.load(cusFen)) { alert("Enter Valid State !"); return }
 	loadGameFen = cusFen
-	alert("Loaded Game! Choose Color");
+	// alert("Loaded Game! Choose Color");
 }
 
 function handleNormalCheckMate() {
@@ -717,3 +722,18 @@ function onClickSquare(sq) {
 		}
 	}
 }
+
+// File Handling Operarions
+function downloadFile(filename, text) {
+	var element = document.createElement('a');
+	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+	element.setAttribute('download', filename);
+
+	element.style.display = 'none';
+	document.body.appendChild(element);
+
+	element.click();
+
+	document.body.removeChild(element);
+}
+

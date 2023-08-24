@@ -348,6 +348,7 @@ joinButtonEl.addEventListener('click', (e) => {
 		joinButtonEl.setAttribute("disabled", "disabled");
 		formEl[0].setAttribute("disabled", "disabled")
 		document.querySelector('#roomDropdownP').style.display = 'none';
+		// EMIT FILE CONTENTS FROM HERE
 		formEl[1].setAttribute("disabled", "disabled")
 		//Now Let's try to join it in room // If users more than 2 we will 
 		socket.emit('joinRoom', { user, room }, (error) => {

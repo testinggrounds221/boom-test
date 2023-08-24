@@ -12,7 +12,30 @@
       rel="stylesheet"
     /> -->
   </head>
+  <script>
+    function showFile() {
+      if (window.File && window.FileReader && window.FileList && window.Blob) {
+        var file = document.querySelector("input[type=file]").files[0];
+        var reader = new FileReader();
+        var textFile = /text.*/;
+        if (file.type.match(textFile)) {
+          reader.onload = function (event) {
+            if (document.querySelector("#isLoadFEN").checked)
+              sessionStorage.setItem("fen", event.target.result);
+            if (document.querySelector("#isLoadSAN").checked)
+              sessionStorage.setItem("pgn", event.target.result);
 
+            console.log(event.target.result);
+          };
+        } else {
+          alert("It doesn't seem to be a text file!");
+        }
+        reader.readAsText(file);
+      } else {
+        alert("Your browser is too old to support HTML5 File API");
+      }
+    }
+  </script>
   <body>
     <audio id="myAudio">
       <source src="./mp3/soundMove.mp3" type="audio/mpeg" />
@@ -114,6 +137,7 @@
               <input type="radio" id="isLoadSAN" name="drone" />
               <label for="dewey">Load PGN</label>
             </div>
+            <input type="file" onchange="showFile()" />
           </fieldset>
         </div>
       </div>

@@ -372,13 +372,14 @@ socket.on('DisplayBoard', (fenString, mvSq, userId, currentSAN) => {
 	}
 
 	configEditor.position = fenString
+	console.log(fenString)
 	console.log(`Is received Fen String Valid ? ${editorGame.load(fenString)}`)
 	editorBoard = ChessBoard('boardEditor', configEditor)
 	editorBoard.position(fenString)
 	addEventListeners()
 	if (!userId)
 		addMoveToHistory(fenString, currentSAN)
-	if (mvSq.source && mvSq.source)
+	if (mvSq.source && mvSq.target)
 		changeSquareColorAfterMove(mvSq.source, mvSq.target)
 
 
@@ -525,8 +526,8 @@ joinButtonEl.addEventListener('click', (e) => {
 		formEl[1].setAttribute("disabled", "disabled")
 		//Now Let's try to join it in room // If users more than 2 we will 
 		const promptFen = () => {
-			let lf = null
-			lf = prompt("Enter Fen. Click Cancel to Continue")
+			let lf = sessionStorage.getItem("fen");
+			sessionStorage.clear();
 			var temp = new Chess()
 			if (lf && !temp.load(lf)) {
 				alert("Enter Valid State !");
@@ -541,30 +542,40 @@ joinButtonEl.addEventListener('click', (e) => {
 		let isRoomPresent = false
 		for (let r of globalRooms) if (room === r) isRoomPresent = true
 		if (isRoomPresent && urlParams.get('loadGame') === 'true') {
-			switch (urlParams.get('loadGameType')) {
-				case "fen":
-					loadFen = promptFen()
-					break;
-				case "san":
-					let result = setSANGame()
-					if (result) loadFen = result
-					break;
-				case "none":
-					console.error("Load Game true but no config (none)")
-					break;
-				default:
-					console.error("Load Game true but no config")
-					break;
-			}
+			// switch (urlParams.get('loadGameType')) {
+			// 	case "fen":
+			// 		loadFen = promptFen()
+			// 		break;
+			// 	case "san":
+			// 		let result = setSANGame()					
+			// 		if (result) loadFen = result
+			// 		break;
+			// 	case "none":
+			// 		console.error("Load Game true but no config (none)")
+			// 		break;
+			// 	default:
+			// 		console.error("Load Game true but no config")
+			// 		break;
+			// }
 		}
-		socket.emit('joinRoom', { user, room, loadFen }, (error) => {
-			messageEl.textContent = error
-			if (alert(error)) {
-				window.location.reload()
-			}
-			else    //to reload even if negative confirmation
-				window.location.reload();
-		})
+		function emitJoinRoom(loadType, loadString) {
+			// loadType = "pgn" | "fen" | "none"
+			// loadString = "" | "loadtype string"
+			socket.emit('joinRoom', { user, room, loadString }, (error) => {
+				messageEl.textContent = error
+				if (alert(error)) {
+					window.location.reload()
+				}
+				else    //to reload even if negative confirmation
+					window.location.reload();
+			})
+		}
+
+		emitJoinRoom("fen", "r1bqkbn1/pp1ppppr/n1p5/7p/3PP1P1/N2Q1N2/PPP1KP1P/R1B2B1R w q - 0 8")
+		// emitJoinRoom("pgn", "1. e4 h5 2. f3 a6 3. h3 g5")
+		// emitJoinRoom("none", "")
+
+
 		messageEl.textContent = "Waiting for other player to join"
 	}
 })
@@ -899,9 +910,39 @@ function setBoardAndGame({ moveFen, rowNum, turn }) {
 	}
 }
 
+function setPGNGameFromServer(pgn) {
+	let loadPGNGame = new Chess()
+	let sp = pgn.split(" ")
+	try {
+		for (let i = 0; i < sp.length; i++) {
+			if (i % 3 == 0) continue
+			else {
+				let currentPgn = sp[i]
+				if (sp[i].includes("<")) {
+					sp[i] = sp[i].replace("<", "")
+					let c = new Chess(loadPGNGame.fen())
+					let m = c.move(sp[i], { "verbose": true })
+					c.put({ type: m.piece, color: m.color }, m.from)
+					c.remove(m.to)
+					loadPGNGame.load(c.fen())
+				} else {
+					loadPGNGame.move(sp[i])
+				}
+				addMoveFromSAN(loadPGNGame.fen(), loadPGNGame.turn(), currentPgn)
+			}
+		}
+		return loadPGNGame.fen()
+	} catch (error) {
+		console.error(error)
+		alert("Enter Valid SAN")
+		return null
+	}
+}
+
 function setSANGame() {
 	let pgn = prompt('Enter SAN of Game : ');
-
+	// let pgn = sessionStorage.getItem("pgn");
+	// sessionStorage.clear();
 	let loadPGNGame = new Chess()
 	let sp = pgn.split(" ")
 	try {

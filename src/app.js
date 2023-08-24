@@ -18,6 +18,7 @@ app.use(express.static(publicDirectoryPath))
 const gameData = new Map()
 const userData = new Map()
 const roomsList = new Set()
+let roomFen = {}
 
 let totalUsers = 0;
 
@@ -51,6 +52,10 @@ io.on('connection', (socket) => {
 	//Creating and joining the room
 	socket.on('joinRoom', ({ user, room, loadFen }, callback) => {
 		//We have to limit the number of users in a room to be just 2
+		handleJoinFEN(user, room, loadFen)
+	})
+
+	function handleJoinFEN(user, room, loadFen) {
 		if (io.nsps['/'].adapter.rooms[room] && io.nsps['/'].adapter.rooms[room].length === 2) {
 			return callback('Already 2 users are there in the room!')
 		}
@@ -75,7 +80,7 @@ io.on('connection', (socket) => {
 		io.emit('totalRooms', totalRooms)
 		userData[user + "" + socket.id] = {
 			room, user,
-			id: socket.id
+			id: socket.id, loadFen
 		}
 
 		//If two users are in the same room, we can start
@@ -97,7 +102,7 @@ io.on('connection', (socket) => {
 			io.to(room).emit('DisplayBoard', game.fen(), { source: null, target: null }, socket.id)
 			updateStatus(game, room)
 		}
-	})
+	}
 
 	socket.on('changeHistory', ({ changeFen, room }) => {
 		var game = gameData[socket.id]
