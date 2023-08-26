@@ -639,7 +639,7 @@ function addMoveFromSAN(moveFen, currCustomTurn, currentCustomPgn) {
 	const rowNum = moveTable.rows.length
 	// td.innerText = `Move ${rowNum + 1}`
 	td.innerText = currentCustomPgn
-	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currCustomTurn) })
+	// td.addEventListener('click', () => { previewFen(moveFen, rowNum, currCustomTurn) })
 	td.style = "cursor:pointer"
 	tr.appendChild(td)
 	tr.id = `m${currCustomTurn}-${rowNum}`
