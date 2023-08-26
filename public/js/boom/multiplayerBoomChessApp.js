@@ -890,7 +890,7 @@ function addMoveToHistory(moveFen, currentSAN) {
 	// td.innerText = `Move ${rowNum + 1}`
 	td.innerText = currentSAN
 	currentSAN = null
-	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currTurn) })
+	// td.addEventListener('click', () => { previewFen(moveFen, rowNum, currTurn) })
 	td.style = "cursor:pointer"
 	tr.appendChild(td)
 	tr.id = `m${currTurn}-${rowNum}`
