@@ -330,11 +330,15 @@ function savePGNListener(e) {
 	let bc = br.length
 
 	let savePgnText = ""
-	for (let wp = 0, bp = 0; wp < wc, bp < bc; wp++, bp++) {
+	let wp = 0, bp = 0
+	for (; wp < wc, bp < bc; wp++, bp++) {
 		let w = wr[wp].children[0].innerText
 		let b = br[bp].children[0].innerText
 		savePgnText += (wp + 1 + ". " + w + " " + b + " ")
 	}
+	if (wp < wc)
+		savePgnText += (wp + 1 + ". " + wr[wp].children[0].innerText)
+
 	savePgnText = savePgnText.trim()
 	// navigator.clipboard.writeText(savePgnText);
 	// alert("Copied the PGN : " + savePgnText + " to clipboard")
@@ -611,7 +615,10 @@ joinButtonEl.addEventListener('click', (e) => {
 		// emitJoinRoom("fen", "rnbqkbnr/8/1p1p1p1p/p1p1p1pP/1P1P1P2/P1P1P1P1/8/RNBQKBNR b KQkq - 0 9")
 
 		// emitJoinRoom("pgn", "1. f3 h6 2. g3 g6 3. h3")
-		// emitJoinRoom("pgn", "1. f3 h6 2. g3 g6 3. h3 f6 4. e3 e6 5. d3 d6 6. c3 c6 7. b3 b6 8. a3 a6")
+		// emitJoinRoom("pgn", "1. h3 a6 2. g3 b6 3. f3 c6 4. e3 d6 5. d3 e6 6. c3 f6 7. b3 g6 8. a3 h6 9. h4")
+
+
+
 		if (sessionStorage.length === 0)
 			emitJoinRoom("none", "")
 		else if (sessionStorage.length === 2)
@@ -900,7 +907,7 @@ function previewFen(moveFen, rowNum, turn) {
 
 	console.log(editorGame.turn(), editorBoard.orientation()[0])
 	console.log(typeof (editorGame.turn()), typeof (editorBoard.orientation()[0]))
-	// editorGame.load(moveFen)
+	editorGame.load(moveFen)
 	editorBoard.position(moveFen)
 	changeFen = { moveFen, rowNum, turn }
 	isChangeFen = true
@@ -952,6 +959,39 @@ function setBoardAndGame({ moveFen, rowNum, turn }) {
 			removeID(`mw-${i}`)
 		}
 	}
+}
+
+function setBoardAndGameNew({ moveFen, rowNum, turn }) {
+	isChangeFen = false
+	editorGame.load(moveFen)
+	editorBoard.position(moveFen)
+	// TODO emit Change History like in handle valid move
+	const whiteTable = document.getElementById("whiteMoves")
+	const blackTable = document.getElementById("blackMoves")
+
+	const maxLenW = whiteTable.rows.length
+	const maxLenB = blackTable.rows.length
+
+	// for (let i = rowNum; i < maxLenW; i++) {
+	// 	document.getElementById(`mb-${i}`).remove()
+	// }
+
+	// for (let i = rowNum; i < maxLenB; i++) {
+	// 	document.getElementById(`mw-${i}`).remove()
+	// }
+	const removeID = (id) => {
+		let ele = document.getElementById(id)
+		if (ele) ele.remove()
+		else console.error(id + "Not found")
+	}
+
+	for (let i = rowNum + 1; i < maxLenW; i++) { // DO NOT ADD 1. IT COMES FROM DISPLAY BOARD.
+		removeID(`mb-${i}`)
+	}
+	for (let i = rowNum; i < maxLenB; i++) {
+		removeID(`mw-${i}`)
+	}
+
 }
 
 function setPGNGameFromServer(pgn) {
@@ -1024,8 +1064,10 @@ function addMoveFromSAN(moveFen, currCustomTurn, currentCustomPgn) {
 	let td = document.createElement("td")
 	const rowNum = moveTable.rows.length
 	// td.innerText = `Move ${rowNum + 1}`
+
 	td.innerText = currentCustomPgn
-	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currCustomTurn) })
+	if (editorBoard.orientation()[0] === currCustomTurn)
+		td.addEventListener('click', () => { previewFen(moveFen, rowNum, currCustomTurn) })
 	td.style = "cursor:pointer"
 	tr.appendChild(td)
 	tr.id = `m${currCustomTurn}-${rowNum}`

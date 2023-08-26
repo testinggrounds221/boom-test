@@ -226,7 +226,10 @@ io.on('connection', (socket) => {
 			//For giving turns one by one
 			io.to(room).emit('Dragging', socket.id)
 			// DUpliacte this here and in multiplayer
-			io.to(room).emit('DisplayBoard', game.fen(), { source: null, target: null }, socket.id)
+			if (room in roomFen && roomFen[room]['san'] != null)
+				io.to(room).emit('DisplayBoardSAN', roomFen[room]['san'], { source: null, target: null }, socket.id)
+			else
+				io.to(room).emit('DisplayBoard', game.fen(), { source: null, target: null }, socket.id)
 			delete roomFen[room]
 			updateStatus(game, room)
 		}
