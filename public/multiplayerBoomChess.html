@@ -12,7 +12,30 @@
       rel="stylesheet"
     /> -->
   </head>
-
+  <script>
+    function showFileMultiPlayer(loadType) {
+      console.log(loadType);
+      if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // var file = document.querySelector("input[type=file]").files[0];
+        const file = document.getElementById(loadType + "File").files[0];
+        var reader = new FileReader();
+        var textFile = /text.*/;
+        if (file.type.match(textFile)) {
+          reader.onload = function (event) {
+            sessionStorage.clear();
+            sessionStorage.setItem("loadType", loadType);
+            sessionStorage.setItem("loadString", event.target.result);
+            console.log(event.target.result);
+          };
+        } else {
+          alert("It doesn't seem to be a text file!");
+        }
+        reader.readAsText(file);
+      } else {
+        alert("Your browser is too old to support HTML5 File API");
+      }
+    }
+  </script>
   <body>
     <audio id="myAudio">
       <source src="./mp3/soundMove.mp3" type="audio/mpeg" />
@@ -111,7 +134,24 @@
               </div>
             </div>
           </div>
+
           <div style="text-align: center">
+            <fieldset style="border: 0; width: 100%" id="loadGameFieldSet">
+              <legend>Select a Load Game Configuration :</legend>
+              <input
+                type="file"
+                onchange="showFileMultiPlayer('fen')"
+                id="fenFile"
+                class="custom-file-input custom-file-input-fen"
+              />
+              <br />
+              <input
+                type="file"
+                onchange="showFileMultiPlayer('pgn')"
+                id="pgnFile"
+                class="custom-file-input custom-file-input-pgn"
+              />
+            </fieldset>
             <button class="game ui black button" id="joinButton">Join</button>
           </div>
           <div style="text-align: center">
@@ -343,4 +383,48 @@
 
     <script src="./js/boom/multiplayerBoomChessApp.js" type="module"></script>
   </body>
+  <style>
+    .custom-file-input-fen::before {
+      content: "Upload FEN File";
+      display: inline-block;
+      background: linear-gradient(top, #f9f9f9, #e3e3e3);
+      border: 1px solid #999;
+      border-radius: 3px;
+      padding: 5px 8px;
+      outline: none;
+      white-space: nowrap;
+      -webkit-user-select: none;
+      cursor: pointer;
+      text-shadow: 1px 1px #fff;
+      font-weight: 700;
+      font-size: 10pt;
+      margin-right: 3px;
+    }
+    .custom-file-input-pgn::before {
+      content: "Upload PGN File";
+      display: inline-block;
+      background: linear-gradient(top, #f9f9f9, #e3e3e3);
+      border: 1px solid #999;
+      border-radius: 3px;
+      padding: 5px 8px;
+      outline: none;
+      white-space: nowrap;
+      -webkit-user-select: none;
+      cursor: pointer;
+      text-shadow: 1px 1px #fff;
+      font-weight: 700;
+      font-size: 10pt;
+      margin-right: 3px;
+    }
+    .custom-file-input::-webkit-file-upload-button {
+      visibility: hidden;
+      display: none;
+    }
+    .custom-file-input:hover::before {
+      border-color: black;
+    }
+    .custom-file-input:active::before {
+      background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+    }
+  </style>
 </html>

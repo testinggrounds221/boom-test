@@ -312,9 +312,10 @@ function onSnapEndEditor(params) {
 
 function saveFenListener(e) {
 	e.preventDefault();
-	var copyText = editorGame.fen();
-	navigator.clipboard.writeText(copyText);
-	alert("Copied the text: " + copyText + " to clipboard");
+	var saveFenText = editorGame.fen();
+	// navigator.clipboard.writeText(saveFenText);
+	// alert("Copied the text: " + saveFenText + " to clipboard");
+	downloadFile("fen.txt", saveFenText)
 }
 
 function savePGNListener(e) {
@@ -328,15 +329,16 @@ function savePGNListener(e) {
 	let wc = wr.length
 	let bc = br.length
 
-	let pgnString = ""
+	let savePgnText = ""
 	for (let wp = 0, bp = 0; wp < wc, bp < bc; wp++, bp++) {
 		let w = wr[wp].children[0].innerText
 		let b = br[bp].children[0].innerText
-		pgnString += (wp + 1 + ". " + w + " " + b + " ")
+		savePgnText += (wp + 1 + ". " + w + " " + b + " ")
 	}
-	pgnString = pgnString.trim()
-	navigator.clipboard.writeText(pgnString);
-	alert("Copied the PGN : " + pgnString + " to clipboard")
+	savePgnText = savePgnText.trim()
+	// navigator.clipboard.writeText(savePgnText);
+	// alert("Copied the PGN : " + savePgnText + " to clipboard")
+	downloadFile("pgn.txt", savePgnText)
 }
 
 //Update Status Event
@@ -385,6 +387,46 @@ socket.on('DisplayBoard', (fenString, mvSq, userId, currentSAN) => {
 
 
 	console.log(currentSAN)
+	// document.getElementById('pgn').textContent = pgn
+})
+
+socket.on('DisplayBoardSAN', (pgn, mvSq, userId, currentSAN) => {
+	// console.log(fenString)
+	//This is to be done initially only
+	if (userId != undefined) {
+		current_time = Date.parse(new Date());
+		deadline = new Date(current_time + time_in_minutes * 60 * 1000);
+		messageEl.textContent = 'Match Started!! Best of Luck...'
+		if (socket.id == userId) {
+			configEditor.orientation = 'black'
+			run_clock('clck', deadline);
+			pause_clock()
+		} else {
+			run_clock('clck', deadline);
+		}
+		document.getElementById('joinFormDiv').style.display = "none";
+		document.querySelector('#chessGame').style.display = null
+		document.querySelector('#moveTable').style.display = null
+		ChatEl.style.display = null
+		document.getElementById('statusPGN').style.display = null
+	}
+	let fenString = null
+	let result = setSANGame(pgn)
+	if (result) fenString = result
+	configEditor.position = fenString
+	console.log(fenString)
+	console.log(`Is received Fen String Valid ? ${editorGame.load(fenString)}`)
+	editorBoard = ChessBoard('boardEditor', configEditor)
+	console.log(editorGame.turn())
+	editorBoard.position(fenString)
+	addEventListeners()
+	if (!userId)
+		addMoveToHistory(fenString, currentSAN)
+	if (mvSq.source && mvSq.target)
+		changeSquareColorAfterMove(mvSq.source, mvSq.target)
+
+
+	// console.log(currentSAN)
 	// document.getElementById('pgn').textContent = pgn
 })
 
@@ -513,6 +555,7 @@ sendButtonEl.addEventListener('click', (e) => {
 
 //Connect clients only after they click Join
 joinButtonEl.addEventListener('click', (e) => {
+	// VALIDATE WHETHER FEN OR PGN IS IN SESSION STORAGE
 	e.preventDefault()
 
 	var user = formEl[0].value, room = formEl[1].value
@@ -526,16 +569,6 @@ joinButtonEl.addEventListener('click', (e) => {
 		document.querySelector('#roomDropdownP').style.display = 'none';
 		formEl[1].setAttribute("disabled", "disabled")
 		//Now Let's try to join it in room // If users more than 2 we will 
-		const promptFen = () => {
-			let lf = sessionStorage.getItem("fen");
-			sessionStorage.clear();
-			var temp = new Chess()
-			if (lf && !temp.load(lf)) {
-				alert("Enter Valid State !");
-				promptFen()
-			}
-			else return lf
-		}
 
 		const urlParams = new URLSearchParams(window.location.search);
 		if (!urlParams.get('loadGame')) console.error("NO LOADGAME Instructions")
@@ -560,9 +593,10 @@ joinButtonEl.addEventListener('click', (e) => {
 			// }
 		}
 		function emitJoinRoom(loadType, loadString) {
+
 			// loadType = "pgn" | "fen" | "none"
 			// loadString = "" | "loadtype string"
-			socket.emit('joinRoom', { user, room, loadString }, (error) => {
+			socket.emit('joinRoom', { user, room, loadType, loadString }, (error) => {
 				messageEl.textContent = error
 				if (alert(error)) {
 					window.location.reload()
@@ -570,11 +604,20 @@ joinButtonEl.addEventListener('click', (e) => {
 				else    //to reload even if negative confirmation
 					window.location.reload();
 			})
+			sessionStorage.clear()
 		}
 
-		emitJoinRoom("fen", "r1bqkbn1/pp1pp1pr/n1p2p2/4P2p/3P2P1/N2Q1N2/PPP1KP1P/R1B2B1R w q - 0 8")
-		// emitJoinRoom("pgn", "1. e4 h5 2. f3 a6 3. h3 g5")
-		// emitJoinRoom("none", "")
+		// emitJoinRoom("fen", "r1bqkbn1/pp1pp1pr/n1p2p2/4P2p/3P2P1/N2Q1N2/PPP1KP1P/R1B2B1R w q - 0 8")
+		// emitJoinRoom("fen", "rnbqkbnr/8/1p1p1p1p/p1p1p1pP/1P1P1P2/P1P1P1P1/8/RNBQKBNR b KQkq - 0 9")
+
+		// emitJoinRoom("pgn", "1. f3 h6 2. g3 g6 3. h3")
+		// emitJoinRoom("pgn", "1. f3 h6 2. g3 g6 3. h3 f6 4. e3 e6 5. d3 d6 6. c3 c6 7. b3 b6 8. a3 a6")
+		if (sessionStorage.length === 0)
+			emitJoinRoom("none", "")
+		else if (sessionStorage.length === 2)
+			emitJoinRoom(sessionStorage.getItem("loadType"), sessionStorage.getItem("loadString"))
+		else
+			alert("Restart Browser")
 
 
 		messageEl.textContent = "Waiting for other player to join"
@@ -940,10 +983,7 @@ function setPGNGameFromServer(pgn) {
 	}
 }
 
-function setSANGame() {
-	let pgn = prompt('Enter SAN of Game : ');
-	// let pgn = sessionStorage.getItem("pgn");
-	// sessionStorage.clear();
+function setSANGame(pgn) {
 	let loadPGNGame = new Chess()
 	let sp = pgn.split(" ")
 	try {
@@ -990,4 +1030,18 @@ function addMoveFromSAN(moveFen, currCustomTurn, currentCustomPgn) {
 	tr.appendChild(td)
 	tr.id = `m${currCustomTurn}-${rowNum}`
 	moveTable.appendChild(tr)
+}
+
+// File Handling Operarions
+function downloadFile(filename, text) {
+	var element = document.createElement('a');
+	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+	element.setAttribute('download', filename);
+
+	element.style.display = 'none';
+	document.body.appendChild(element);
+
+	element.click();
+
+	document.body.removeChild(element);
 }
