@@ -13,7 +13,10 @@ const port = process.env.PORT || 3000
 const publicDirectoryPath = path.join(__dirname, '../public')
 
 app.use(express.static(publicDirectoryPath))
-
+// loadType = "pgn" | "fen" | "none"
+// loadString = "" | "loadtype string"
+// sessionStorage.setItem("loadType", loadType);
+// sessionStorage.setItem("loadString", event.target.result);
 // const Data = new Map()
 const gameData = new Map()
 const userData = new Map()
