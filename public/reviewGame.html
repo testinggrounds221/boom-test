@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ST CHESS</title>
+    <link rel="icon" href="./img/icon.jpg" />
+    <link rel="stylesheet" type="text/css" href="./css/semantic.min.css" />
+    <link rel="stylesheet" href="./css/chessboard-1.0.0.min.css" />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="jquery-ui-1.11.4.custom/jquery-ui.css" />
+    <!-- <link
+      href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css"
+      rel="stylesheet"
+    /> -->
+  </head>
+  <script>
+    function showFileReviewGame(loadType) {
+      console.log(loadType);
+      if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // var file = document.querySelector("input[type=file]").files[0];
+        const file = document.getElementById(loadType + "File").files[0];
+        var reader = new FileReader();
+        var textFile = /text.*/;
+        if (file.type.match(textFile)) {
+          reader.onload = function (event) {
+            sessionStorage.clear();
+            sessionStorage.setItem("loadType", loadType);
+            sessionStorage.setItem("loadString", event.target.result);
+            console.log(event.target.result);
+            if (loadType == "fen")
+              targetToClear = document.getElementById("pgnFile");
+            else targetToClear = document.getElementById("fenFile");
+            targetToClear.value = "";
+          };
+        } else {
+          alert("It doesn't seem to be a text file!");
+        }
+        reader.readAsText(file);
+      } else {
+        alert("Your browser is too old to support HTML5 File API");
+      }
+    }
+  </script>
+  <body>
+    <audio id="myAudio">
+      <source src="./mp3/soundMove.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+    <audio id="messageTone">
+      <source src="./mp3/insight.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+    <!-- Navbar -->
+    <div>
+      <div
+        style="margin: 0; border-bottom: 4px solid gray; padding: 3px 0"
+        class="ui secondary menu"
+      >
+        <img src="./img/icon.png" style="width: 80px; height: 80px" />
+        <h2 style="text-decoration: underline">ST CHESS</h2>
+        <div class="right menu">
+          <div
+            style="
+              margin-top: 20px;
+              height: 40px;
+              padding-right: 20px;
+              margin-right: 15px;
+            "
+            class="ui labeled button"
+            tabindex="0"
+          >
+            <div class="ui button"><i class="user icon"></i> #Players</div>
+            <a class="ui basic label">
+              <span id="players">0</span>
+            </a>
+          </div>
+
+          <div
+            style="
+              margin-top: 20px;
+              height: 40px;
+              padding-left: 20px;
+              margin-right: 15px;
+            "
+            class="ui labeled button"
+            tabindex="0"
+          >
+            <div class="ui button"><i class="star icon"></i> #Rooms</div>
+            <a class="ui basic label">
+              <span id="rooms">0</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div id="gameMode">
+        <h1 style="text-align: center; margin: 10px; font-size: 35px">
+          Game Mode
+        </h1>
+        <div style="text-align: center">
+          <fieldset style="border: 0; width: 100%" id="loadGameFieldSet">
+            <legend>Select a Load Game Configuration :</legend>
+            <input
+              type="file"
+              onchange="showFileReviewGame('fen')"
+              id="fenFile"
+              class="custom-file-input custom-file-input-fen"
+            />
+            <br />
+            <input
+              type="file"
+              onchange="showFileReviewGame('pgn')"
+              id="pgnFile"
+              class="custom-file-input custom-file-input-pgn"
+            />
+          </fieldset>
+        </div>
+        <div style="text-align: center">
+          <button class="game ui black button" id="white">White</button>
+        </div>
+
+        <div style="text-align: center; margin-top: 10px">
+          <button class="game ui black button" id="black">Black</button>
+        </div>
+      </div>
+      <!-- /Input Form -->
+      <div>
+        <div class="ui two column doubling stackable grid container">
+          <div id="boardEditorGame" class="column">
+            <div
+              id="boardEditor"
+              style="
+                width: 60vh;
+                margin: auto;
+                margin-top: 10px;
+                margin-bottom: 10px;
+              "
+            >
+              <div id="dialog-4" title="Boomerang Move">
+                <p style="margin: 12px">Do you want to move back ?</p>
+              </div>
+            </div>
+            <div id="promotion-dialog">
+              <ol id="promote-to">
+                <li class="ui-state-default">
+                  <span class="piece-name">q</span
+                  ><img class="promotion-piece-q promotion-piece" />
+                </li>
+                <li class="ui-state-default">
+                  <span class="piece-name">r</span
+                  ><img class="promotion-piece-r promotion-piece" />
+                </li>
+                <li class="ui-state-default">
+                  <span class="piece-name">n</span
+                  ><img class="promotion-piece-n promotion-piece" />
+                </li>
+                <li class="ui-state-default">
+                  <span class="piece-name">b</span
+                  ><img class="promotion-piece-b promotion-piece" />
+                </li>
+              </ol>
+            </div>
+
+            <div
+              style="text-align: center; margin-bottom: 20px; display: none"
+              id="backButton"
+            >
+              <a class="ui button black" style="width: 300px">Back</a>
+            </div>
+          </div>
+          <div
+            style="margin-top: 10px; display: none"
+            class="column"
+            id="moveTable"
+          >
+            <div class="ui two column doubling stackable grid container">
+              <div class="column">
+                <h5 class="ui center aligned header">White</h5>
+                <table id="whiteMoves"></table>
+              </div>
+              <div class="column">
+                <h5 class="ui center aligned header">Black</h5>
+                <table id="blackMoves"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="trn" style="font-size: x-large; display: none">TURN</div>
+
+    <!-- <script
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://code.jquery.com/ui/1.11.3/jquery-ui.min.js"
+      integrity="sha256-xI/qyl9vpwWFOXz7+x/9WkG5j/SVnSw21viy8fWwbeE="
+      crossorigin="anonymous"
+    ></script> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="jquery-ui-1.11.4.custom/jquery-ui.js"></script>
+    <script src="./js/semantic.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./js/chessboard-1.0.0.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"
+      integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="./js/boom/reviewGame.js" type="module"></script>
+  </body>
+  <style>
+    .custom-file-input-fen::before {
+      content: "Upload FEN File";
+      display: inline-block;
+      background: linear-gradient(top, #f9f9f9, #e3e3e3);
+      border: 1px solid #999;
+      border-radius: 3px;
+      padding: 5px 8px;
+      outline: none;
+      white-space: nowrap;
+      -webkit-user-select: none;
+      cursor: pointer;
+      text-shadow: 1px 1px #fff;
+      font-weight: 700;
+      font-size: 10pt;
+      margin-right: 3px;
+    }
+    .custom-file-input-pgn::before {
+      content: "Upload PGN File";
+      display: inline-block;
+      background: linear-gradient(top, #f9f9f9, #e3e3e3);
+      border: 1px solid #999;
+      border-radius: 3px;
+      padding: 5px 8px;
+      outline: none;
+      white-space: nowrap;
+      -webkit-user-select: none;
+      cursor: pointer;
+      text-shadow: 1px 1px #fff;
+      font-weight: 700;
+      font-size: 10pt;
+      margin-right: 3px;
+    }
+    .custom-file-input::-webkit-file-upload-button {
+      visibility: hidden;
+      display: none;
+    }
+    .custom-file-input:hover::before {
+      border-color: black;
+    }
+    .custom-file-input:active::before {
+      background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+    }
+  </style>
+</html>
