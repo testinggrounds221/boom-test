@@ -7,6 +7,7 @@ const roomsListEl = document.getElementById('roomsList');
 const myAudioEl = document.getElementById('myAudio');
 const singlePlayerEl = document.getElementById('singlePlayer');
 const multiPlayerEl = document.getElementById('multiPlayer');
+const reviewGameEl = document.getElementById('reviewGame');
 const totalRoomsEl = document.getElementById('rooms')
 const totalPlayersEl = document.getElementById('players')
 const ChatEl = document.querySelector('#chat')
@@ -133,6 +134,11 @@ multiPlayerEl.addEventListener('click', (e) => {
 	} else {
 		location.href = `multiplayerBoomChess.html?loadGame=${false}&loadGameType="none"`
 	}
+})
+
+reviewGameEl.addEventListener('click', (e) => {
+	e.preventDefault();
+	location.href = `reviewGame.html`
 })
 
 isBoomAllowedEle.addEventListener('change', () => {

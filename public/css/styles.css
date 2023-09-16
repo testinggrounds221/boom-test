@@ -114,6 +114,7 @@ body {
 
 #singlePlayer,
 #multiPlayer,
+#reviewGame,
 #joinButton {
 	margin: 10px;
 	width: 300px;
