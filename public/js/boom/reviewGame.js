@@ -31,8 +31,9 @@ let loadGame = true
 let loadGameFen = null
 let isChangeFen = false
 let changeFen = {} // Used to load Previous Configuration of same game
-
-
+let states = []
+let currentStateIndex = 0
+let isLoadTypePGN = false
 
 let waitForBoom = false
 $(function () {
@@ -63,21 +64,27 @@ $(function () {
 	});
 });
 document.getElementById('backButton').addEventListener("click", (e) => { e.preventDefault(); sessionStorage.clear(); window.location.reload() });
+document.getElementById('startState').addEventListener("click", (e) => { e.preventDefault(); startState() });
+document.getElementById('prevState').addEventListener("click", (e) => { e.preventDefault(); prevState() });
+document.getElementById('nextState').addEventListener("click", (e) => { e.preventDefault(); nextState() });
+document.getElementById('endState').addEventListener("click", (e) => { e.preventDefault(); endState() });
+
 
 function setupGameBoard(orientation = 'white') {
 	if (setLoadGame()) {
 		document.getElementById('gameMode').style.display = "none";
 		document.getElementById('backButton').style.display = null;
+		if (isLoadTypePGN) document.getElementById('navigation').style.display = null;
 		document.getElementById('moveTable').style.display = null;
 		document.querySelector('#boardEditorGame').style.display = null;
 
 		configEditor = {
-			draggable: true,
+			draggable: false,
 			position: 'start',
-			onSnapEnd: onSnapEndEditor,
-			onDragStart: onDragStartEditor,
-			onDrop: onDropEditor,
-			onMoveEnd: onMoveEnd,
+			onSnapEnd: () => { return },
+			onDragStart: () => { return },
+			onDrop: () => { return },
+			onMoveEnd: () => { return },
 			orientation: orientation
 		}
 		editorGame = new Chess()
@@ -90,6 +97,8 @@ function setupGameBoard(orientation = 'white') {
 		if (orientation === 'black' && editorGame.turn() == 'w') makeRandomMoveEditor()
 		if (orientation === 'white' && editorGame.turn() == 'b') makeRandomMoveEditor()
 		sessionStorage.clear()
+		if (isLoadTypePGN)
+			updateCurrentStateIndex(states.length - 1)
 	}
 	else {
 		alert("Enter Valid game state")
@@ -128,143 +137,6 @@ function onDragStartEditor(source, piece, position, orientation) {
 	}
 }
 
-function onDropEditor(source, target) {
-	return
-	if (source === target)
-		return onClickSquare(source)
-	currentSource = null
-	// see if the move is legal
-	if (isChangeFen) setBoardAndGame(changeFen)
-	var move = editorGame.move({
-		from: source,
-		to: target,
-		promotion: 'q' // NOTE: always promote to a queen for example simplicity
-	})
-
-	if (move) currentSAN = move["san"]
-	console.log(currentSAN)
-
-	document.getElementById('trn').style.display = null;
-	document.getElementById('trn').innerHTML = editorGame.turn();
-	let currentFen = editorGame.fen()
-	let fun = 0;
-	let validMovesOfPieces = editorGame.moves({ verbose: true, legal: false })
-	for (let i = 0; i < validMovesOfPieces.length; i++) {
-		if (validMovesOfPieces[i].from === source && validMovesOfPieces[i].to === target) {
-			fun = 1;
-			break;
-		}
-	}
-	// myAudioEl.play();
-	// illegal move
-	if (move === null && isBoomAllowed) {
-		console.log("Move is null")
-		if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target)
-			&& fun === 1) {
-			currentSAN = getSAN(source, target)
-			moveIllegal(source, target);
-			makeRandomMoveEditor()
-		}
-		else if (editorGame.in_checkmate() || editorGame.in_check()) {
-			console.log('Check Mate')
-			if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target) && fun === 1) {
-				currentSAN = getSAN(source, target)
-				moveIllegal(source, target);
-				makeRandomMoveEditor()
-			} else {
-				return
-			}
-		} else {
-			console.log('Snap 2');
-			return
-		}
-		return;
-	} else {
-		if (move === null) { handleNormalCheckMate(); return }
-		// changeSquareColorAfterMove(source, target)
-	}
-	if (move != null && 'captured' in move && move.piece != 'p') {
-		waitForBoom = true
-		editorGame.undo();
-		if (!isCheckAfterRemovePiece(editorGame.fen(), move.to) && isBoomAllowed) {
-			var move = editorGame.move({
-				from: source,
-				to: target,
-				promotion: 'q'
-			})
-			$("#dialog-4").data('move', move).dialog("open");
-		} else {
-			currentSAN = getSAN(source, target)
-			var move = editorGame.move({
-				from: source,
-				to: target,
-				promotion: 'q'
-			})
-		}
-	}
-	editorGame.undo(); //move is ok, now we can go ahead and check for promotion
-	// is it a promotion?
-	var source_rank = source.substring(2, 1);
-	var target_rank = target.substring(2, 1);
-	if (source != null) {
-		var piece = editorGame.get(source).type;
-		if (
-			piece === "p" &&
-			((source_rank === "7" && target_rank === "8") ||
-				(source_rank === "2" && target_rank === "1"))
-		) {
-			promoting = true;
-			// get piece images
-			$(".promotion-piece-q").attr("src", getImgSrc("q"));
-			$(".promotion-piece-r").attr("src", getImgSrc("r"));
-			$(".promotion-piece-n").attr("src", getImgSrc("n"));
-			$(".promotion-piece-b").attr("src", getImgSrc("b"));
-			//show the select piece to promote to dialog
-			promotion_dialog
-				.dialog({
-					modal: true,
-					height: 52,
-					width: 184,
-					resizable: true,
-					draggable: false,
-					close: () => {
-						move.promotion = promote_to
-						let promoMove = editorGame.move(move)
-						if (promoMove) currentSAN = move["san"]
-						handleNormalCheckMate()
-						makeRandomMoveEditor()
-					},
-					closeOnEscape: false,
-					dialogClass: "noTitleStuff",
-				})
-				.dialog("widget")
-				.position({
-					of: $("#boardEditorGame"),
-					my: "middle middle",
-					at: "middle middle",
-				});
-			//the actual move is made after the piece to promote to
-			//has been selected, in the stop event of the promotion piece selectable
-			return;
-		} else {
-			var move = editorGame.move({
-				from: source,
-				to: target,
-				promotion: 'q' // NOTE: always promote to a queen for example simplicity
-			})
-		}
-
-		// squareToHighlight = move.to
-		editorTurnt = 1 - editorTurnt;
-		// make random legal move for black
-		// window.setTimeout(makeRandomMoveEditor, 250)
-
-	}
-	if (!waitForBoom && isBoomAllowed) {
-		alertCheckMate()
-		makeRandomMoveEditor()
-	} else if (!isBoomAllowed) handleNormalCheckMate()
-}
 
 function alertCheckMate() {
 	if (editorGame.in_checkmate() && isBoomCheckMate(editorGame.fen())) {
@@ -395,56 +267,27 @@ function changeSquareColorAfterMove(source, target) {
 }
 
 //Move Table Functions
-function addMove(moveFen) {
-	let moveTable = null
-	const currTurn = editorGame.turn()
-	if (currTurn === 'b')
-		moveTable = document.getElementById("whiteMoves")
-	else moveTable = document.getElementById("blackMoves")
-
-	let tr = document.createElement("tr")
-	let td = document.createElement("td")
-	const rowNum = moveTable.rows.length
-	// td.innerText = `Move ${rowNum + 1}`
-	td.innerText = currentSAN
-	currentSAN = null
-	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currTurn) })
-	td.style = "cursor:pointer"
-	tr.appendChild(td)
-	tr.id = `m${currTurn}-${rowNum}`
-	moveTable.appendChild(tr)
-}
-
-function previewFen(moveFen, rowNum, turn) {
-	editorGame.load(moveFen)
-	editorBoard.position(moveFen)
+function previewFen(moveFen, rowNum, turn, moveIndex) {
+	setBoard(moveFen)
 	changeFen = { moveFen, rowNum, turn }
 	isChangeFen = true
+	updateCurrentStateIndex(moveIndex)
+}
+// SET FEN HERE AND REPLACE IN ABOVE FUNC
+function setBoard(tempFen) {
+	editorGame.load(tempFen)
+	editorBoard.position(tempFen)
 }
 
-function setBoardAndGame({ moveFen, rowNum, turn }) {
-	isChangeFen = false
-	editorGame.load(moveFen)
-	editorBoard.position(moveFen)
-	const whiteTable = document.getElementById("whiteMoves")
-	const blackTable = document.getElementById("blackMoves")
+function updateCurrentStateIndex(moveIndex) {
+	document.getElementById(`m${currentStateIndex}`).style.outline = null
+	currentStateIndex = moveIndex
 
-	const maxLenW = whiteTable.rows.length
-	if (turn === 'w') rowNum++
-	for (let i = rowNum; i < maxLenW; i++) {
-		if (document.getElementById(`mw-${i}`))
-			document.getElementById(`mw-${i}`).remove()
-		if (document.getElementById(`mb-${i}`))
-			document.getElementById(`mb-${i}`).remove()
-	}
-
-	// const maxLenB = blackTable.rows.length
-	// for (let i = rowNum + 1; i < maxLenB; i++) {
-	// 	document.getElementById(`m${turn}-${i}`).remove()
-	// }
-	if (playWithComp) if (editorGame.turn() === 'b') makeRandomMoveEditor()
+	if (currentStateIndex === null) return
+	let currentRow = document.getElementById(`m${currentStateIndex}`)
+	setBoard(states[currentStateIndex])
+	currentRow.style.outline = "2px solid black"
 }
-
 //Checking Functions
 function isCheckAfterRemovePiece(fen, square) {
 	// we see isCheck for turn
@@ -503,13 +346,7 @@ function isCheckForTurnAftermove(fen, source, target) {
 }
 
 function makeRandomMoveEditor() {
-	return
-	editorBoard.position(editorGame.fen())
-	addMove(editorGame.fen())
-	if (playWithComp) {
-		setTimeout(() => { makeRandomMove(); addMove(editorGame.fen()) }, 500);
 
-	}
 }
 
 // Misc Functions
@@ -641,8 +478,10 @@ function setSANGame() {
 				addMoveFromSAN(loadPGNGame.fen(), loadPGNGame.turn(), currentPgn)
 			}
 		}
+
 		console.log(loadPGNGame.fen())
 		loadGameFen = loadPGNGame.fen()
+		isLoadTypePGN = true
 		return true;
 	} catch (error) {
 		console.log(error)
@@ -661,10 +500,13 @@ function addMoveFromSAN(moveFen, currCustomTurn, currentCustomPgn) {
 	const rowNum = moveTable.rows.length
 	// td.innerText = `Move ${rowNum + 1}`
 	td.innerText = currentCustomPgn
-	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currCustomTurn) })
+	states.push(moveFen)
+	const currStateLen = states.length
+	td.addEventListener('click', () => { previewFen(moveFen, rowNum, currCustomTurn, currStateLen - 1) })
 	td.style = "cursor:pointer"
 	tr.appendChild(td)
-	tr.id = `m${currCustomTurn}-${rowNum}`
+	tr.id = `m${currStateLen - 1}`
+	// set id as move number
 	moveTable.appendChild(tr)
 }
 
@@ -674,6 +516,7 @@ function setFENGame() {
 	var temp = new Chess()
 	if (cusFen && !temp.load(cusFen)) { return false }
 	loadGameFen = cusFen
+	isLoadTypePGN = false
 	return true
 	// alert("Loaded Game! Choose Color");
 }
@@ -761,3 +604,26 @@ function downloadFile(filename, text) {
 	document.body.removeChild(element);
 }
 
+function nextState() {
+	if (isLoadTypePGN && currentStateIndex + 1 < states.length)
+		updateCurrentStateIndex(currentStateIndex + 1)
+}
+
+function prevState() {
+	if (isLoadTypePGN && currentStateIndex - 1 >= 0)
+		updateCurrentStateIndex(currentStateIndex - 1)
+}
+
+function startState() {
+	updateCurrentStateIndex(0)
+}
+
+function endState() {
+	updateCurrentStateIndex(states.length - 1)
+}
+
+document.addEventListener('keydown', (event) => {
+	var code = event.code;
+	if (code === "ArrowRight") nextState()
+	if (code === "ArrowLeft") prevState()
+}, false);
