@@ -1111,31 +1111,31 @@ function startTest() {
 
 }
 
-function testMultiplayerOld(params) {
-	if (editorGame.turn() === editorBoard.orientation()[0]) {
-		let moves = editorGame.moves({ verbose: true })
-		moves = moves.filter((o) => !o.hasOwnProperty("captured"))
-		let randomMove = moves[Math.floor(Math.random() * moves.length)]
-		// console.log(moves)
+// function testMultiplayerOld(params) {
+// 	if (editorGame.turn() === editorBoard.orientation()[0]) {
+// 		let moves = editorGame.moves({ verbose: true })
+// 		moves = moves.filter((o) => !o.hasOwnProperty("captured"))
+// 		let randomMove = moves[Math.floor(Math.random() * moves.length)]
+// 		// console.log(moves)
 
-		if (!editorGame.game_over() && randomMove)
-			onDropEditor(randomMove.from, randomMove.to)
-		else {
-			// alert("Simulation Over")
-			// const urlParams = new URLSearchParams(window.location.search);
-			let name1 = urlParams.get('name')
-			let room1 = urlParams.get('room')
-			room1 = room1[0] + String.fromCharCode(room1.charCodeAt(1) + 1)
-			let color1 = urlParams.get('color')
-			// // window.location.href = `multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`
-			window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
-			// window.location.reload()
-			// clearInterval(INTERVAL_ID)
-			// document.getElementById('multiPlayerStatus').innerHTML = "1"
+// 		if (!editorGame.game_over() && randomMove)
+// 			onDropEditor(randomMove.from, randomMove.to)
+// 		else {
+// 			// alert("Simulation Over")
+// 			// const urlParams = new URLSearchParams(window.location.search);
+// 			let name1 = urlParams.get('name')
+// 			let room1 = urlParams.get('room')
+// 			room1 = room1[0] + String.fromCharCode(room1.charCodeAt(1) + 1)
+// 			let color1 = urlParams.get('color')
+// 			// // window.location.href = `multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`
+// 			window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
+// 			// window.location.reload()
+// 			// clearInterval(INTERVAL_ID)
+// 			// document.getElementById('multiPlayerStatus').innerHTML = "1"
 
-		}
-	}
-}
+// 		}
+// 	}
+// }
 
 function testMultiplayer(params) {
 	if (editorGame.turn() === editorBoard.orientation()[0]) {
@@ -1147,17 +1147,7 @@ function testMultiplayer(params) {
 		if (!editorGame.game_over() && randomMove)
 			onDropEditor(randomMove.from, randomMove.to)
 		else {
-			const urlParams = new URLSearchParams(window.location.search);
-			let name1 = urlParams.get('name')
-			let room1 = urlParams.get('room')
-
-			if (parseInt(room1) % 2 == 0)
-				room1 = (parseInt(room1) + 1).toString()
-
-			else
-				room1 = (parseInt(room1) - 1).toString()
-			let color1 = urlParams.get('color')
-			window.location.href = `multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`
+			document.getElementById('multiPlayerStatus').innerHTML = "WAITING FOR REFRESH"
 			// window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
 		}
 	}
@@ -1173,7 +1163,7 @@ setTimeout(() => {
 	else
 		room1 = (parseInt(room1) - 1).toString()
 	let color1 = urlParams.get('color')
-	window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
+	window.location.href = `multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`
 }, 60000)
 startTest()
 // http://localhost:3000/multiplayerBoomChess.html?name=1&room=1&color=b
