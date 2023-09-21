@@ -1103,8 +1103,8 @@ function startTest() {
 
 	document.getElementById("multiPlayerName").value = name
 	document.getElementById("multiPlayerRoom").value = room
-	let time_out = 500
-	if (color == 'b') time_out = 600
+	let time_out = 2000
+	if (color == 'b') time_out = 2100
 	setTimeout(() => {
 		document.getElementById("joinButton").click()
 	}, time_out)
@@ -1157,7 +1157,8 @@ function testMultiplayer(params) {
 			else
 				room1 = (parseInt(room1) - 1).toString()
 			let color1 = urlParams.get('color')
-			window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
+			window.location.href = `multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`
+			// window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
 		}
 	}
 }
