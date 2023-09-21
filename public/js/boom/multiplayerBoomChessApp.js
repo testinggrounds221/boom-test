@@ -80,7 +80,7 @@ $(function () {
 				$(this).dialog("close");
 				waitForBoom = false
 				handleValidMove($(this).data('move').from, $(this).data('move').to)
-				alertCheckMate()
+				// alertCheckMate()
 			},
 		},
 	});
@@ -121,7 +121,7 @@ function onDrop(source, target) {
 	//emits event after piece is dropped
 	pause_clock();
 	var room = formEl[1].value;
-	myAudioEl.play();
+	// myAudioEl.play();
 	// isMyTurn(false)
 	// socket.emit('Dropped', { source, target, room })
 }
@@ -147,10 +147,10 @@ function onDropEditor(source, target) {
 			break;
 		}
 	}
-	myAudioEl.play();
+	// myAudioEl.play();
 	// illegal move
 	if (move === null) {
-		console.log("Move is null")
+		// console.log("Move is null")
 		if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target)
 			&& fun === 1) {
 			currentSAN = getSAN(source, target)
@@ -160,7 +160,7 @@ function onDropEditor(source, target) {
 		// TODO: EMit Check mate
 
 		else if (editorGame.in_checkmate() || editorGame.in_check()) {
-			console.log('Check Mate')
+			// console.log('Check Mate')
 			if (editorGame.get(target) && !isCheckAfterRemovePiece(currentFen, target) && fun === 1) {
 				currentSAN = getSAN(source, target)
 				moveIllegal(source, target);
@@ -169,14 +169,14 @@ function onDropEditor(source, target) {
 				return
 			}
 		} else {
-			console.log('Snap 2');
+			// console.log('Snap 2');
 			return
 		}
 		return;
 	} else {
 		// changeSquareColorAfterMove(source, target)
 		if (move.san === "O-O" || move.san === "O-O-O") {
-			alertCheckMate()
+			// alertCheckMate()
 			handleCastleMove(source, target)
 			return
 		}
@@ -232,7 +232,7 @@ function onDropEditor(source, target) {
 						if (promoMove) currentSAN = move["san"]
 						let pt = { type: move.promotion, color: move.color }
 						handlePawnPromo(source, target, pt)
-						alertCheckMate()
+						// alertCheckMate()
 					},
 					closeOnEscape: false,
 					dialogClass: "noTitleStuff",
@@ -261,7 +261,7 @@ function onDropEditor(source, target) {
 
 	}
 	if (!waitForBoom) {
-		alertCheckMate()
+		// alertCheckMate()
 		handleValidMove(source, target)
 	}
 }
@@ -274,28 +274,28 @@ function onMoveEnd() {
 function handleValidMove(source, target) {
 	pause_clock();
 	var room = formEl[1].value;
-	myAudioEl.play();
+	// myAudioEl.play();
 	socket.emit('Dropped', { source, target, room, currentSAN })
 }
 
 function handleBoomMove(source, target) {
 	pause_clock();
 	var room = formEl[1].value;
-	myAudioEl.play();
+	// myAudioEl.play();
 	socket.emit('boomDropped', { source, target, room, currentSAN })
 }
 
 function handleCastleMove(source, target) {
 	pause_clock();
 	var room = formEl[1].value;
-	myAudioEl.play();
+	// myAudioEl.play();
 	socket.emit('castleDropped', { source, target, room, currentSAN })
 }
 
 function handlePawnPromo(source, target, pieceType) {
 	pause_clock();
 	var room = formEl[1].value;
-	myAudioEl.play();
+	// myAudioEl.play();
 	socket.emit('pawnPromoDropped', { source, target, pieceType, room, currentSAN })
 }
 
@@ -352,9 +352,9 @@ socket.on('updateEvent', ({ status, fen, pgn }) => {
 })
 
 socket.on('printing', (fen) => {
-	console.log(fen)
+	// console.log(fen)
 })
-
+let INTERVAL_ID = null
 //Catch Display event
 socket.on('DisplayBoard', (fenString, mvSq, userId, currentSAN) => {
 	// console.log(fenString)
@@ -375,6 +375,13 @@ socket.on('DisplayBoard', (fenString, mvSq, userId, currentSAN) => {
 		document.querySelector('#moveTable').style.display = null
 		ChatEl.style.display = null
 		document.getElementById('statusPGN').style.display = null
+		// startTest();
+
+		// setTimeout(() => {
+		// 	if (editorBoard.orientation()[0] === 'w')
+		// 		document.getElementById('multiPlayerStatus').innerHTML = "1"
+		// }, 3000)
+		INTERVAL_ID = setInterval(testMultiplayer, 500)
 	}
 
 	configEditor.position = fenString
@@ -479,11 +486,11 @@ socket.on('gameOver', (turn, win) => {
 	if (win) {
 		if (editorBoard.orientation().includes(turn)) {
 			statusEl.textContent = "You lost, better luck next time :)"
-			alert("You lost")
+			// alert("You lost")
 		}
 		else {
 			statusEl.textContent = "Congratulations, you won!!"
-			alert("You Won")
+			// alert("You Won")
 		}
 	}
 	else {
@@ -493,7 +500,7 @@ socket.on('gameOver', (turn, win) => {
 
 //Client disconnected in between
 socket.on('disconnectedStatus', () => {
-	alert('Opponent left the game!!')
+	// alert('Opponent left the game!!')
 	messageEl.textContent = 'Opponent left the game!!'
 })
 
@@ -602,11 +609,11 @@ joinButtonEl.addEventListener('click', (e) => {
 			// loadString = "" | "loadtype string"
 			socket.emit('joinRoom', { user, room, loadType, loadString }, (error) => {
 				messageEl.textContent = error
-				if (alert(error)) {
-					window.location.reload()
-				}
-				else    //to reload even if negative confirmation
-					window.location.reload();
+				// if (alert(error)) {
+				// 	window.location.reload()
+				// }
+				// else    //to reload even if negative confirmation
+				// 	window.location.reload();
 			})
 			sessionStorage.clear()
 		}
@@ -624,10 +631,10 @@ joinButtonEl.addEventListener('click', (e) => {
 		else if (sessionStorage.length === 2)
 			emitJoinRoom(sessionStorage.getItem("loadType"), sessionStorage.getItem("loadString"))
 		else
-			alert("Restart Browser")
+			// alert("Restart Browser")
 
 
-		messageEl.textContent = "Waiting for other player to join"
+			messageEl.textContent = "Waiting for other player to join"
 	}
 })
 
@@ -733,7 +740,7 @@ function alertCheckMate() {
 	if (editorGame.in_checkmate() && isBoomCheckMate(editorGame.fen())) {
 		if (editorBoard.orientation().includes(editorGame.turn())) {
 			statusEl.textContent = "You lost, better luck next time :)"
-			alert("You lost")
+			// alert("You lost")
 		}
 		else {
 			statusEl.textContent = "Congratulations, you won!!"
@@ -1018,7 +1025,7 @@ function setPGNGameFromServer(pgn) {
 		return loadPGNGame.fen()
 	} catch (error) {
 		console.error(error)
-		alert("Enter Valid SAN")
+		// alert("Enter Valid SAN")
 		return null
 	}
 }
@@ -1049,7 +1056,7 @@ function setSANGame(pgn) {
 		return loadPGNGame.fen()
 	} catch (error) {
 		console.error(error)
-		alert("Enter Valid SAN")
+		// alert("Enter Valid SAN")
 		return null
 	}
 }
@@ -1087,3 +1094,85 @@ function downloadFile(filename, text) {
 
 	document.body.removeChild(element);
 }
+
+function startTest() {
+	const urlParams = new URLSearchParams(window.location.search);
+	let name = urlParams.get('name')
+	let room = urlParams.get('room')
+	let color = urlParams.get('color')
+
+	document.getElementById("multiPlayerName").value = name
+	document.getElementById("multiPlayerRoom").value = room
+	let time_out = 500
+	if (color == 'b') time_out = 600
+	setTimeout(() => {
+		document.getElementById("joinButton").click()
+	}, time_out)
+
+}
+
+function testMultiplayerOld(params) {
+	if (editorGame.turn() === editorBoard.orientation()[0]) {
+		let moves = editorGame.moves({ verbose: true })
+		moves = moves.filter((o) => !o.hasOwnProperty("captured"))
+		let randomMove = moves[Math.floor(Math.random() * moves.length)]
+		// console.log(moves)
+
+		if (!editorGame.game_over() && randomMove)
+			onDropEditor(randomMove.from, randomMove.to)
+		else {
+			// alert("Simulation Over")
+			// const urlParams = new URLSearchParams(window.location.search);
+			let name1 = urlParams.get('name')
+			let room1 = urlParams.get('room')
+			room1 = room1[0] + String.fromCharCode(room1.charCodeAt(1) + 1)
+			let color1 = urlParams.get('color')
+			// // window.location.href = `multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`
+			window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
+			// window.location.reload()
+			// clearInterval(INTERVAL_ID)
+			// document.getElementById('multiPlayerStatus').innerHTML = "1"
+
+		}
+	}
+}
+
+function testMultiplayer(params) {
+	if (editorGame.turn() === editorBoard.orientation()[0]) {
+		let moves = editorGame.moves({ verbose: true })
+		moves = moves.filter((o) => !o.hasOwnProperty("captured"))
+		let randomMove = moves[Math.floor(Math.random() * moves.length)]
+		// console.log(moves)
+
+		if (!editorGame.game_over() && randomMove)
+			onDropEditor(randomMove.from, randomMove.to)
+		else {
+			const urlParams = new URLSearchParams(window.location.search);
+			let name1 = urlParams.get('name')
+			let room1 = urlParams.get('room')
+
+			if (parseInt(room1) % 2 == 0)
+				room1 = (parseInt(room1) + 1).toString()
+
+			else
+				room1 = (parseInt(room1) - 1).toString()
+			let color1 = urlParams.get('color')
+			window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
+		}
+	}
+}
+setTimeout(() => {
+	const urlParams = new URLSearchParams(window.location.search);
+	let name1 = urlParams.get('name')
+	let room1 = urlParams.get('room')
+
+	if (parseInt(room1) % 2 == 0)
+		room1 = (parseInt(room1) + 1).toString()
+
+	else
+		room1 = (parseInt(room1) - 1).toString()
+	let color1 = urlParams.get('color')
+	window.location.replace(`http://localhost:3000/multiplayerBoomChess.html?name=${name1}&room=${room1}&color=${color1}`)
+}, 60000)
+startTest()
+// http://localhost:3000/multiplayerBoomChess.html?name=1&room=1&color=b
